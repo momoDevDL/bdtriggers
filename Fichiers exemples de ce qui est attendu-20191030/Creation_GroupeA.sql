@@ -156,5 +156,5 @@ BEGIN
         SET NIVEAU = 'BAS';
     END IF;
     RETURN (NIVEAU);
-END$$
+END $$
 DELIMITER ;

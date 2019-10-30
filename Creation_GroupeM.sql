@@ -207,3 +207,128 @@ SELECT * FROM INSCRIT;
 /*------------------------------------- 
 Définion de triggers
 --------------------------------------*/
+
+
+/*------------------------------------- 
+Définion des fonctions
+--------------------------------------*/
+
+/*
+Définition de la fonction taille d'un événement, qui étant donné un évenement 
+(via son nombre de personne maximale)
+ décrit la taille de l'évenement par trois niveau de taille: 
+ - PETIT: événement de moins de 20 personnes;
+ - MOYEN: événement de taille comprise entre 20 et 100 personnes;
+ - GROS: événement de plus de 100 personnes.
+*/
+
+DROP FUNCTION IF EXISTS TAILLE_EVENEMENT;
+DELIMITER $$
+CREATE FUNCTION TAILLE_EVENEMENT(EVENEMENT VARCHAR(45))
+RETURNS VARCHAR(20)
+DETERMINISTIC
+BEGIN
+	DECLARE TAILLE NUMERIC(6,0);
+    DECLARE NIVEAU VARCHAR(20);
+    
+    SELECT NOMBRE_MAX into TAILLE FROM EVENEMENT WHERE ID_EVENEMENT = EVENEMENT;
+    
+    IF TAILLE > 100 THEN
+        SET NIVEAU = 'GROS';
+    ELSEIF (TAILLE >= 20 AND 
+           	TAILLE <= 100) THEN
+        SET NIVEAU = 'MOYEN';
+    ELSEIF TAILLE < 20 THEN
+        SET NIVEAU = 'PETIT';
+    END IF;
+    RETURN (NIVEAU);
+END$$
+DELIMITER ;
+
+/*
+Définition de la fonction nombre de place restante, qui étant donné un évenement 
+(via son nombre de personne maximale et son nombre d'inscrit)
+renvoie le nombre de place restante.
+*/
+
+DROP FUNCTION IF EXISTS NOMBRE_PLACE_RESTANTE;
+DELIMITER $$
+CREATE FUNCTION NOMBRE_PLACE_RESTANTE (EVENEMENT VARCHAR(45))
+RETURNS NUMERIC(6,0)
+DETERMINISTIC
+BEGIN
+    DECLARE NB_INSCRIT NUMERIC(6,0);
+    DECLARE NB_MAX_PARTICIPANT NUMERIC(6,0);
+    DECLARE RES NUMERIC(6,0);
+    
+    SELECT COUNT (*) into NB_INSCRIT FROM INSCRIT WHERE ID_EVENEMENT = EVENEMENT;
+    SELECT NOMBRE_MAX into NB_MAX_PARTICIPANT FROM EVENEMENT WHERE ID_EVENEMENT = EVENEMENT;
+    
+    IF (NB_INSCRIT - NB_MAX_PARTICIPANT) > 0 THEN
+    	SET RES = (NB_INSCRIT - NB_MAX_PARTICIPANT);
+    ELSEIF (NB_INSCRIT - NB_MAX_PARTICIPANT) <= 0 THEN
+    	SET RES = 0;
+    END IF;
+    
+    RETURN (RES);
+END$$
+DELIMITER ;
+
+/*
+Définition de la fonction compare ancienneté, qui étant donné deux utilisateurs 
+(via la date de création de l'utilisateur)
+renvoie trois réponse:
+- Plus ancien : si l'utilisateur 1 est plus ancien que l'utilisateur 2;
+- Plus récent : si l'utilisateur 1 est plus récent que l'utilisateur 2; 
+- Egale : si les deux utilisateur au créé leur compte le même jour;
+*/
+
+DROP FUNCTION IF EXISTS COMPARE_ANCIENNETE;
+DELIMITER $$
+CREATE FUNCTION COMPARE_ANCIENNETE(U1 VARCHAR(45), U2 VARCHAR(45))
+RETURNS VARCHAR(20)
+DETERMINISTIC
+BEGIN
+    DECLARE DATE_U1 DATE(6,0);
+    DECLARE DATE_U2 DATE(6,0);
+    DECLARE RES VARCHAR(20);
+    
+    SELECT DATE_INSCRIPTION into DATE_U1 FROM UTILISATEUR WHERE U_ID = U1;
+    SELECT DATE_INSCRIPTION into DATE_U2 FROM UTILISATEUR WHERE U_ID = U2;
+    
+    IF DATE_U1 > DATE_U2 THEN
+    	SET RES = 'Plus récent';
+    ELSEIF DATE_U1 < DATE_U2 THEN
+    	SET RES = 'Plus ancien';
+    ELSEIF DATE_U1 == DATE_U2 THEN
+    	SET RES = 'Egale';
+    END IF;
+    
+    RETURN (RES);
+END$$
+DELIMITER ;
+
+/*
+Définition de la fonction moyen d'age, qui étant donné un événement 
+(via l'age des participant)
+renvoie la moyen d'age des participant à cet événement.
+*/
+/*
+DROP FUNCTION IF EXISTS MOYEN_D_AGE;
+DELIMITER $$
+CREATE FUNCTION MOYEN_D_AGE (EVENEMENT VARCHAR(45))
+RETURNS NUMERIC(3,0)
+DETERMINISTIC
+BEGIN
+    DECLARE MOYEN NUMERIC(3,0);
+    
+    SELECT (COUNT *) into MOYEN FROM INSCRIT WHERE ID_EVENEMENT = EVENEMENT;
+    
+    RETURN (MOYEN);
+END$$
+DELIMITER ;
+*/
+
+
+
+
